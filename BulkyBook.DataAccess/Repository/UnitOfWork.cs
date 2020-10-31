@@ -10,12 +10,13 @@ namespace BulkyBook.DataAccess.Repository
     {
         private readonly ApplicationDbContext _db;
 
-
-
         public ICategoryRepository Category { get; private set; }
         public ISP_Call SP_Call { get; private set; }
         public ICoverType CoverType { get; private set; }
         public IProduct Product { get; private set; }
+        public ICompanyRepository Company { get; private set; }
+
+        public IApplicationUserRepository ApplicationUserRepository { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -24,6 +25,8 @@ namespace BulkyBook.DataAccess.Repository
             CoverType = new CoverTypeRepository(_db);
             SP_Call = new SP_Call(_db);
             Product = new ProductRepository(_db);
+            Company = new CompanyRepository(_db);
+            ApplicationUserRepository = new ApplicationUserRepository(_db);
         }
 
 
