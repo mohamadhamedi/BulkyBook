@@ -11,7 +11,11 @@ namespace BulkyBook.DataAccess.Repository.IRepository
         ISP_Call SP_Call { get; }
         IProduct Product { get; }
         ICompanyRepository Company { get; }
-        IApplicationUserRepository ApplicationUserRepository { get; }
+        IApplicationUserRepository ApplicationUser { get; }
+        IShoppingCartRepository ShoppingCart { get; }
+        IOrderDetailsRepository OrderDetails { get; }
+        IOrderHeaderRepository OrderHeader { get; }
+
         void Save();
     }
 }
