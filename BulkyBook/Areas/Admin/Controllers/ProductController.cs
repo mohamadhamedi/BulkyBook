@@ -35,12 +35,13 @@ namespace BulkyBook.Areas.Admin.Controllers
             return View();
         }
 
-        public IActionResult Upsert(int? id)
+        public async Task<IActionResult> Upsert(int? id)
         {
+            IEnumerable<Category> catList = await _unitOfWork.Category.GetAllAsync();
             ProductVM productVM = new ProductVM()
             {
                 Product = new Product(),
-                CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+                CategoryList = catList.Select(u => new SelectListItem
                 {
                     Text = u.Name,
                     Value = u.Id.ToString()
@@ -66,7 +67,7 @@ namespace BulkyBook.Areas.Admin.Controllers
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public IActionResult Upsert(ProductVM productVM)
+        public async Task<IActionResult> Upsert(ProductVM productVM)
         {
             if (ModelState.IsValid)
             {
@@ -75,7 +76,7 @@ namespace BulkyBook.Areas.Admin.Controllers
                 if (files.Count > 0)
                 {
                     string fileName = Guid.NewGuid().ToString();
-                    var uploads=Path.Combine(webRootPath,@"images\products\");
+                    var uploads = Path.Combine(webRootPath, @"images\products\");
                     var extension = Path.GetExtension(files[0].FileName);
                     if (productVM.Product.ImageURL != null)
                     {
@@ -86,7 +87,7 @@ namespace BulkyBook.Areas.Admin.Controllers
                         }
                     }
 
-                    using (var fileStreams=new FileStream(Path.Combine(uploads, fileName + extension), FileMode.Create))
+                    using (var fileStreams = new FileStream(Path.Combine(uploads, fileName + extension), FileMode.Create))
                     {
                         files[0].CopyTo(fileStreams);
                     }
@@ -116,7 +117,9 @@ namespace BulkyBook.Areas.Admin.Controllers
             }
             else
             {
-                productVM.CategoryList = _unitOfWork.Category.GetAll().Select(i => new SelectListItem
+                IEnumerable<Category> catList = await _unitOfWork.Category.GetAllAsync();
+
+                productVM.CategoryList = catList.Select(i => new SelectListItem
                 {
                     Text = i.Name,
                     Value = i.Id.ToString()

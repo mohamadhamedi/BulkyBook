@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.Models;
+using BulkyBook.Models.ViewModels;
 using BulkyBook.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BulkyBook.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles =SD.Role_Admin+","+SD.Role_Employee)]
+    [Authorize(Roles = SD.Role_Admin + "," + SD.Role_Employee)]
     public class CategoryController : Controller
     {
 
@@ -23,20 +24,38 @@ namespace BulkyBook.Areas.Admin.Controllers
         }
 
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index(int productPage = 1)
         {
-            return View();
+            CategoryVM categoryVM = new CategoryVM()
+            {
+                Categories = await _unitOfWork.Category.GetAllAsync()
+            };
+
+            var count = categoryVM.Categories.Count();
+            categoryVM.Categories = categoryVM.Categories.OrderBy(p => p.Name)
+                .Skip((productPage - 1) * 2).Take(2).ToList();
+
+            categoryVM.PagingInfo = new PagingInfo
+            {
+                CurrentPage = productPage,
+                ItemsPerPage = 2,
+                TotalItem = count,
+                urlParam = "/Admin/Category/Index?productPage=:"
+            };
+
+            return View(categoryVM);
         }
 
 
-        public IActionResult Upsert(int? id)
+
+        public async Task<IActionResult> Upsert(int? id)
         {
             Category category = new Category();
             if (id == null)
             {
                 return View(category);
             }
-            category = _unitOfWork.Category.GetFirstOrDefault(u => u.Id == id);
+            category = await _unitOfWork.Category.GetFirstOrDefaultAsync(u => u.Id == id);
             if (category == null)
             {
                 return NotFound();
@@ -46,13 +65,13 @@ namespace BulkyBook.Areas.Admin.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Upsert(Category category)
+        public async Task<IActionResult> Upsert(Category category)
         {
             if (ModelState.IsValid)
             {
                 if (category.Id == 0)
                 {
-                    _unitOfWork.Category.Add(category);
+                    await _unitOfWork.Category.AddAsync(category);
                 }
                 else
                 {
@@ -66,21 +85,24 @@ namespace BulkyBook.Areas.Admin.Controllers
         #region API-Calls
         [HttpGet]
 
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var allObj = _unitOfWork.Category.GetAll();
+            var allObj = await _unitOfWork.Category.GetAllAsync();
             return Json(new { data = allObj });
         }
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var objFromDb = _unitOfWork.Category.GetFirstOrDefault(u => u.Id == id);
+            var objFromDb = await _unitOfWork.Category.GetFirstOrDefaultAsync(u => u.Id == id);
             if (objFromDb == null)
             {
+                TempData["Error"] = "Error while deleting the category";
                 return Json(new { success = false, message = "Not Found" });
             }
-            _unitOfWork.Category.Remove(objFromDb);
+            _unitOfWork.Category.RemoveAsync(objFromDb);
             _unitOfWork.Save();
+            TempData["Success"] = "Category successfully deleted";
+
             return Json(new { success = true, message = "Delete Successful" });
         }
         #endregion
